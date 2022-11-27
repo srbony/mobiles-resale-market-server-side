@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -39,13 +40,29 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const byer = await byersCollection.findOne(query);
+            if (byer) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN);
+                return res.status(403).send({ accessToken: '' })
+            }
+            console.log(byer)
+            res.send({ accessToken: 'token' });
+        })
+        // app.post('/byers', async (req, res) => {
+        //     const byer = req.body;
+        //     console.log(byer)
+        //     const result = await byersCollection.insertOne(byer);
+        //     res.send(result);
+        // })
         app.post('/byers', async (req, res) => {
             const byer = req.body;
-            console.log(byer)
+            console.log(byer);
             const result = await byersCollection.insertOne(byer);
             res.send(result);
         })
-
 
 
         app.get('/bookings', async (req, res) => {
