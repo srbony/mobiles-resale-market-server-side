@@ -24,6 +24,7 @@ async function run() {
     try {
         const categoriesCollection = client.db('productsPortal').collection('categories');
         const productsCollection = client.db('productsPortal').collection('allProducts');
+        const bookingsCollection = client.db('productsPortal').collection('bookings');
 
         app.get('/allProducts', async (req, res) => {
             const query = {};
@@ -38,7 +39,14 @@ async function run() {
         //     res.send(singleProduct);
         // })
 
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
 
+
+        })
 
 
         app.get('/categories', async (req, res) => {
@@ -51,7 +59,30 @@ async function run() {
             const result = await categoriesCollection.insertOne(category);
             res.send(result);
 
-        })
+        });
+
+        app.get('/categories/:category', async (req, res) => {
+            const category = req.params.category;
+            const query = { category: category };
+            const result = await categoriesCollection.find(query).toArray();
+            res.send(result);
+        });
+        app.get('/categories/:categoryId', async (req, res) => {
+            const categoryId = req.params.categoryId;
+            const query = { categoryId: categoryId };
+            const result = await categoriesCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // app.get('/categories/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        //     const result = await categoriesCollection.find(query).toArray();
+        //     res.send(result);
+        // })
+
+
+
     }
     finally {
 
