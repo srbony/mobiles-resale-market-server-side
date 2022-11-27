@@ -25,28 +25,43 @@ async function run() {
         const categoriesCollection = client.db('productsPortal').collection('categories');
         const productsCollection = client.db('productsPortal').collection('allProducts');
         const bookingsCollection = client.db('productsPortal').collection('bookings');
+        const byersCollection = client.db('productsPortal').collection('byers');
 
         app.get('/allProducts', async (req, res) => {
             const query = {};
             const products = await productsCollection.find(query).toArray();
             res.send(products);
         });
-
-        // app.get('/allProducts/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const query = { _id: ObjectId(id) };
-        //     const singleProduct = await productsCollection.find(query);
-        //     res.send(singleProduct);
-        // })
-
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
-            console.log(booking);
+            // console.log(booking);
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
+        });
 
-
+        app.post('/byers', async (req, res) => {
+            const byer = req.body;
+            console.log(byer)
+            const result = await byersCollection.insertOne(byer);
+            res.send(result);
         })
+
+
+
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const bookings = await bookingsCollection.findOne(query).toArray();
+            res.send(bookings)
+        })
+
+
+        // app.post('/bookings', async (req, res) => {
+        //     const booking = req.body;
+        //     console.log(booking);
+        //     const result = await bookingsCollection.insertOne(booking);
+        //     res.send(result);
+        // })
 
 
         app.get('/categories', async (req, res) => {
