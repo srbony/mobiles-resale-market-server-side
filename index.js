@@ -28,6 +28,21 @@ async function run() {
         const bookingsCollection = client.db('productsPortal').collection('bookings');
         const byersCollection = client.db('productsPortal').collection('byers');
 
+        function verifyJWT(req, res, next) {
+            console.log('token', req.headers.authorization);
+            const authHeader = req.headers.authorization;
+            if (!authHeader) {
+                return res.status(401).send('unauthorized access')
+            }
+            const token = authHeader.split(' ')[1];
+            jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+                if (err) {
+                    return res.status(403).send({ message: 'forbidden access' });
+                }
+                req.decoded = decoded;
+                next()
+            })
+        }
         app.get('/allProducts', async (req, res) => {
             const query = {};
             const products = await productsCollection.find(query).toArray();
@@ -46,39 +61,63 @@ async function run() {
             const byer = await byersCollection.findOne(query);
             if (byer) {
                 const token = jwt.sign({ email }, process.env.ACCESS_TOKEN);
-                return res.status(403).send({ accessToken: '' })
+                return res.send({ accessToken: token })
             }
             console.log(byer)
-            res.send({ accessToken: 'token' });
+            res.status(403).send({ accessToken: '' });
         })
-        // app.post('/byers', async (req, res) => {
-        //     const byer = req.body;
-        //     console.log(byer)
-        //     const result = await byersCollection.insertOne(byer);
-        //     res.send(result);
-        // })
+
+
+
+
+
         app.post('/byers', async (req, res) => {
             const byer = req.body;
             console.log(byer);
             const result = await byersCollection.insertOne(byer);
             res.send(result);
+        });
+
+        app.put('/byers/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                },
+            };
+            const result = await byersCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+
         })
 
+
+        // app.get('/bookings', verifyJWT, async (req, res) => {
+        //     const email = req.query.email;
+        //     const decodedEmail = req.decoded.email;
+        //     if (email !== decodedEmail) {
+        //         return res.status(403).send({ message: 'forbidden access' })
+
+        //     }
+        //     console.log('token', req.headers.authorization);
+        //     const query = { email: email };
+        //     const bookings = await bookingsCollection.findOne(query).toArray();
+        //     res.send(bookings)
+        // })
 
         app.get('/bookings', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email };
-            const bookings = await bookingsCollection.findOne(query).toArray();
-            res.send(bookings)
+            const query = {};
+            const bookings = await bookingsCollection.find(query).toArray();
+            res.send(bookings);
+        });
+        app.get('/byers', async (req, res) => {
+            const query = {};
+            const byers = await byersCollection.find(query).toArray();
+            res.send(byers);
         })
 
 
-        // app.post('/bookings', async (req, res) => {
-        //     const booking = req.body;
-        //     console.log(booking);
-        //     const result = await bookingsCollection.insertOne(booking);
-        //     res.send(result);
-        // })
 
 
         app.get('/categories', async (req, res) => {
@@ -92,6 +131,12 @@ async function run() {
             res.send(result);
 
         });
+        app.delete('/categories', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await categoriesCollection.deleteOne(query);
+            res.send(result);
+        })
 
         app.get('/categories/:category', async (req, res) => {
             const category = req.params.category;
